@@ -4,6 +4,7 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+#include "Utils.hpp"
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +37,7 @@ void app_main(void)
 
         printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        DELAY_MS(1000);
 
         fflush(stdout);
     }
