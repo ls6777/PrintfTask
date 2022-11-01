@@ -1,10 +1,9 @@
-#include <stdio.h>
-#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_system.h"
-#include "esp_spi_flash.h"
-#include "Utils.hpp"
+
+//#include "PrintfTask.hpp"
+#include "Task1.hpp"
+//#include "Task2.hpp"
 
 #ifdef __cplusplus
 extern "C"
@@ -15,30 +14,59 @@ extern "C"
 }
 #endif
 
+constexpr uint32_t PRINTF_TASK_STACK_SIZE = 2048;
+constexpr UBaseType_t PRINTF_TASK_PRIORITY = 2;
+
+constexpr uint32_t TASK_1_STACK_SIZE = 2048;
+constexpr UBaseType_t TASK_1_PRIORITY = configMAX_PRIORITIES - 1;
+
+constexpr uint32_t TASK_2_STACK_SIZE = 2048;
+constexpr UBaseType_t TASK_2_PRIORITY = configMAX_PRIORITIES - 2;
+
+//------------------------------------------------------------------
+// StartPrintfTask
+//------------------------------------------------------------------
+void StartPrintfTask(void *argument)
+{
+//    PrintfTask task;
+//    task.Initialize();
+//    task.Run();
+}
+
+//------------------------------------------------------------------
+// StartTask1
+//------------------------------------------------------------------
+void StartTask1(void *argument)
+{
+    Task1 task;
+    task.Initialize();
+    task.Run();
+}
+
+//------------------------------------------------------------------
+// StartTask2
+//------------------------------------------------------------------
+void StartTask2(void *argument)
+{
+//    Task2 task;
+//    task.Initialize();
+//    task.Run();
+}
+
+//------------------------------------------------------------------
+// Main Task
+//------------------------------------------------------------------
 void app_main(void)
 {
-    while (1)
-    {
-        printf("Hello world!\n");
+    TaskHandle_t taskHandle = nullptr;
 
-        /* Print chip information */
-        esp_chip_info_t chip_info;
-        esp_chip_info(&chip_info);
-        printf("This is %s chip with %d CPU core(s), WiFi%s%s, ",
-                CONFIG_IDF_TARGET,
-                chip_info.cores,
-                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    // Printf task
+    xTaskCreate(&StartPrintfTask, "PrintfTask", PRINTF_TASK_STACK_SIZE, NULL, PRINTF_TASK_PRIORITY, &taskHandle);
 
-        printf("silicon revision %d, ", chip_info.revision);
+    // Task 1
+    xTaskCreate(&StartTask1, "Task1", TASK_1_STACK_SIZE, NULL, TASK_1_PRIORITY, &taskHandle);
 
-        printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
-        printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
-
-        DELAY_MS(1000);
-
-        fflush(stdout);
-    }
+    // task 2
+    xTaskCreate(&StartTask2, "Task2", TASK_2_STACK_SIZE, NULL, TASK_2_PRIORITY, &taskHandle);
 }
+
