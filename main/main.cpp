@@ -1,9 +1,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-//#include "PrintfTask.hpp"
+#include "PrintfTask.hpp"
 #include "Task1.hpp"
-//#include "Task2.hpp"
+#include "Task2.hpp"
 
 #ifdef __cplusplus
 extern "C"
@@ -28,9 +28,9 @@ constexpr UBaseType_t TASK_2_PRIORITY = configMAX_PRIORITIES - 2;
 //------------------------------------------------------------------
 void StartPrintfTask(void *argument)
 {
-//    PrintfTask task;
+    PrintfTask task;
 //    task.Initialize();
-//    task.Run();
+    task.Run();
 }
 
 //------------------------------------------------------------------
@@ -48,9 +48,9 @@ void StartTask1(void *argument)
 //------------------------------------------------------------------
 void StartTask2(void *argument)
 {
-//    Task2 task;
-//    task.Initialize();
-//    task.Run();
+    Task2 task;
+    task.Initialize();
+    task.Run();
 }
 
 //------------------------------------------------------------------
