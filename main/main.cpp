@@ -29,7 +29,6 @@ constexpr UBaseType_t TASK_2_PRIORITY = configMAX_PRIORITIES - 2;
 void StartPrintfTask(void *argument)
 {
     PrintfTask task;
-//    task.Initialize();
     task.Run();
 }
 
