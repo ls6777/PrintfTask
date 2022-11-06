@@ -92,7 +92,7 @@ void Task1::HandleProcess()
 
     printf("Task1 stuff: %u\r\n", count);
 
-    DELAY_MS(100);
+    DELAY_MS(1);
     Process();
 }
 

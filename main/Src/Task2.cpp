@@ -2,6 +2,7 @@
 #include "Task2.hpp"
 #include "Message.hpp"
 #include "Utils.hpp"
+#include "PrintUtils.h"
 
 // buffers for task stats
 static char taskListBuf[500];
@@ -106,6 +107,9 @@ void Task2::HandleProcess()
     printf("Name             Abs Time       %% Time\r\n");
     printf("*******************************************\r\n");
     printf("%s\r\n", taskStatsBuf);
+    printf("\r\n");
+
+    printf("High Water Mark: %d\r\n", GetHighWaterMark());
     printf("\r\n");
 }
 
