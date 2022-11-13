@@ -3,6 +3,7 @@
 #include "Message.hpp"
 #include "Utils.hpp"
 #include "PrintUtils.h"
+#include "driver/gpio.h"
 
 // buffers for task stats
 static char taskListBuf[500];
@@ -96,13 +97,16 @@ void Task2::HandleInitialize()
 void Task2::HandleProcess()
 {
     vTaskList(taskListBuf);
+    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
     printf("\r\nTASK INFO**********************************************\r\n");
     printf("Name          State  Priority   Stack   Num    Core\r\n");
     printf("*******************************************************\r\n");
     printf("%s\r\n", taskListBuf);
     printf("\r\n");
+    gpio_set_level(GPIO_OUTPUT_IO_0, 0);
 
     vTaskGetRunTimeStats(taskStatsBuf);
+    gpio_set_level(GPIO_OUTPUT_IO_1, 1);
     printf("TASK STATS INFO****************************************\r\n");
     printf("Name             Abs Time       %% Time\r\n");
     printf("*******************************************\r\n");
@@ -111,6 +115,7 @@ void Task2::HandleProcess()
 
     printf("High Water Mark: %d\r\n", GetHighWaterMark());
     printf("\r\n");
+    gpio_set_level(GPIO_OUTPUT_IO_1, 0);
 }
 
 //------------------------------------------------------------------

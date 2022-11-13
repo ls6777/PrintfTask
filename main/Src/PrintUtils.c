@@ -9,100 +9,74 @@ static char* tail = buffer;
 static char* head = buffer;
 static int highWaterMark = 0;;
 
+// function pointer that's used to flush the buffer when writing out from task
 int (*realStdOutWrite)(struct _reent *, void *, const char *, int);
-//__FILE* realStdOutWrite;
 
+//------------------------------------------------------------------
+// Prototypes
+//------------------------------------------------------------------
+/// @brief calculates the length currently used in the printf buffer
+/// @return Size currently occupied in bytes
 int CalculateBufferOccupiedSize();
 
+/// @brief Function used by stdout for writing output from printf
+/// @details This version is thread safe and protected with locks so a particular printf
+///          call must finish before another start
+/// @param[in] r - reentrancy info (unused)
+/// @param[in] fd - file descriptor (unused)
+/// @param[in] data - data to be written
+/// @param[in] len - length of data to be written
+/// @return len of data written to buffer
+int WriteReroute(struct _reent* r, void* fd, const char* data, int len);
+
+/// @brief Length of data to send from buffer to output
+/// @return length of data to transmit
+int CalculateLengthToOutput();
+
+//------------------------------------------------------------------
+// InitStdOut
+//------------------------------------------------------------------
 void InitStdOut()
 {
     realStdOutWrite = _GLOBAL_REENT->_stdout->_write;
-    _GLOBAL_REENT->_stdout->_write = my_write;
+    _GLOBAL_REENT->_stdout->_write = WriteReroute;
 }
 
-////------------------------------------------------------------------
-//// _write
-////------------------------------------------------------------------
-//int _write(int fd, char *ptr, int len)
-//{
-//    char* currHead = head;
-//    if (len > (MAX_LENGTH - CalculateLength(currHead, tail)))
-//    {
-//        len = MAX_LENGTH - CalculateLength(currHead, tail) - 1;
-//    }
-//    for (int i = 0; i < len; ++i)
-//    {
-//        if (endBuffer == tail)
-//        {
-//            tail = buffer;
-//        }
-//        *tail++ = *(ptr + i);
-//    }
-//    return len;
-//}
-
-/// @brief Retargets the C library printf function to a circular buffer.
-/// @param ch - character to output
-/// @return character that was output
-int my_write(struct _reent* r, void *fd,
-                        const char *c,
-                        int len)
+//------------------------------------------------------------------
+// WriteReroute
+//------------------------------------------------------------------
+int WriteReroute(struct _reent* r, void* fd, const char* data, int len)
 {
-//   return old_write(r, fd, c, len);
-//    fileDesc = fd;
-    int count = 0;
-////    if (CalculateLength(head, tail) >= (MAX_LENGTH - 1))
-////    {
-////        return ch;
-////    }
-//    while (0 != *c)
+    // check how much space is available, only output up to available space;
+    int spaceRemaining = (MAX_LENGTH - 1) - CalculateBufferOccupiedSize();
+    if (spaceRemaining < len)
+    {
+        len = spaceRemaining;
+    }
+
+    // put data into buffer
     for (int i = 0; i < len; i++)
     {
-        *tail++ = *c++;
+        *tail++ = *data++;
         if (tail == endBuffer)
         {
             tail = buffer;
         }
-        count++;
     }
 
-    int bufferOccupied = CalculateBufferOccupiedSize();
+    // update high water mark of buffer if needed. This can help developer determine appropriate size
+    // for printf buffer
+    int bufferOccupied = (MAX_LENGTH - 1) - (spaceRemaining - len);
     if (bufferOccupied > highWaterMark)
     {
         highWaterMark = bufferOccupied;
     }
 
-
-    return count;
+    return len;
 }
 
-///// @brief Retargets the C library printf function to a circular buffer.
-///// @param ch - character to output
-///// @return character that was output
-//int _write_r(struct _reent *ptr,
-//        int fd,
-//        const void *buf,
-//        size_t cn)
-//{
-//    int count = 0;
-////    if (CalculateLength(head, tail) >= (MAX_LENGTH - 1))
-////    {
-////        return ch;
-////    }
-//    while (0 != *(char*)(buf))
-//    {
-//        *tail++ = *(char*)(buf)++;
-//        if (tail == endBuffer)
-//        {
-//            tail = 0;
-//        }
-//        count++;
-//    }
-//    return count;
-//}
-
 //------------------------------------------------------------------
-// CalculateLength
+// CalculateBufferOccupiedSize
 //------------------------------------------------------------------
 int CalculateBufferOccupiedSize()
 {
@@ -122,11 +96,14 @@ int CalculateBufferOccupiedSize()
 }
 
 //------------------------------------------------------------------
-// CalculateLengthToTransfer
+// CalculateLengthToOutput
 //------------------------------------------------------------------
-int CalculateLengthToTransfer(char* cHead, char* cTail)
+int CalculateLengthToOutput()
 {
+    char* cHead = head;
+    char* cTail = tail;
     int length = 0;
+
     if (cTail >= cHead)
     {
         length = cTail - cHead;
@@ -143,31 +120,22 @@ int CalculateLengthToTransfer(char* cHead, char* cTail)
 //------------------------------------------------------------------
 int TransmitData()
 {
-    int lengthToTransfer = CalculateLengthToTransfer(head, tail);
+    int lengthToTransfer = CalculateLengthToOutput(head, tail);
 
-    realStdOutWrite(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, head, lengthToTransfer);
+    int dataTransfered = realStdOutWrite(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, head, lengthToTransfer);
 
-    head += lengthToTransfer;
+    head += dataTransfered;
     if (head >= endBuffer)
     {
         head = buffer;
     }
-//    for (int i = 0; i < lengthToTransfer; i++)
-//    {
-//        if (endBuffer == head)
-//        {
-//            head = buffer;
-//        }
-////        putchar(*head++);
-//        head++;
-//    }
 
-//    putchar('G');
-//    putchar('\r');
-//    putchar('\n');
-    return lengthToTransfer;
+    return dataTransfered;
 }
 
+//------------------------------------------------------------------
+// GetHighWaterMark
+//------------------------------------------------------------------
 int GetHighWaterMark()
 {
     return highWaterMark;

@@ -7,20 +7,9 @@
 extern "C" {
 #endif
 
+/// @brief Setup reroute of stdout
+/// @details Retargets the C library printf function to a circular buffer.
 void InitStdOut();
-
-/// @brief Write the provide data out the provide put char function
-/// @param fd - unused
-/// @param ptr - buffer where data to be transmitted is located
-/// @param len - len of data to be transmitted
-/// @return len of data to be transmitted
-int my_write(struct _reent* r, void *fd, const char *c, int len);
-
-/// @brief calculates the length currently used in the buffer
-/// @param cHead - head pointer in buffer
-/// @param cTail - tail pointer in buffer
-/// @return calculated length occupied in the buffer
-//int CalculateLength();
 
 int GetHighWaterMark();
 

@@ -2,6 +2,7 @@
 #include "Task1.hpp"
 #include "Message.hpp"
 #include "Utils.hpp"
+#include "driver/gpio.h"
 
 QHandle Task1::msgQHandle;
 
@@ -90,9 +91,11 @@ void Task1::HandleProcess()
 
     count++;
 
+//    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
     printf("Task1 stuff: %u\r\n", count);
+//    gpio_set_level(GPIO_OUTPUT_IO_0, 0);
 
-    DELAY_MS(1);
+    DELAY_MS(10);
     Process();
 }
 
