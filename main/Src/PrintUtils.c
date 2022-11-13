@@ -40,6 +40,8 @@ int CalculateLengthToOutput();
 //------------------------------------------------------------------
 void InitStdOut()
 {
+    // This will change based on the target being used. This is how to do it
+    // on an ESP32 target
     realStdOutWrite = _GLOBAL_REENT->_stdout->_write;
     _GLOBAL_REENT->_stdout->_write = WriteReroute;
 }
