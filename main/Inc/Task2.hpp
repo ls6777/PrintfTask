@@ -3,7 +3,7 @@
 
 #include "TargetPort.hpp"
 
-/// @brief A sample task doing some processing for example using the TaskMonitor
+/// @brief A sample task doing some printing
 class Task2
 {
     public:
@@ -14,7 +14,7 @@ class Task2
         /// @brief Send message for task to do processing
         void Process();
 
-        /// @brief task for the task manager
+        /// @brief Task2 execution
         /// @details Main loop that waits for messages to get posted to the queue and process them
         void Run();
 
@@ -23,7 +23,7 @@ class Task2
 
     private:
 
-        /// @brief Initialize the default task
+        /// @brief Initialize the task
         void HandleInitialize();
 
         /// @brief Do some processing on this task

@@ -44,7 +44,7 @@ void Task2::Initialize()
 //------------------------------------------------------------------
 void Task2::Run()
 {
-    constexpr uint32_t MSG_Q_TIMEOUT = 5000; // ms
+    constexpr uint32_t MSG_Q_TIMEOUT = 200; // ms
     StatusType status = FALSE;
     Message msg;
 

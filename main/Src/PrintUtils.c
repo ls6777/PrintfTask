@@ -78,16 +78,6 @@ int WriteReroute(struct _reent* r, void* fd, const char* data, int len)
         tail += len;
     }
 
-//    // put data into buffer
-//    for (int i = 0; i < len; i++)
-//    {
-//        *tail++ = *data++;
-//        if (tail == endBuffer)
-//        {
-//            tail = buffer;
-//        }
-//    }
-
     // update high water mark of buffer if needed. This can help developer determine appropriate size
     // for printf buffer
     int bufferOccupied = CalculateBufferOccupiedSize();
@@ -106,8 +96,8 @@ int CalculateBufferOccupiedSize()
 {
     char* const cHead = head;
     char* const cTail = tail;
-
     int length = 0;
+
     if (cTail >= cHead)
     {
         length = cTail - cHead;
@@ -116,10 +106,7 @@ int CalculateBufferOccupiedSize()
     {
         length = MAX_LENGTH - (cHead - cTail);
     }
-    if (length > 13000)
-    {
-        count++;
-    }
+
     return length;
 }
 
@@ -152,10 +139,13 @@ int TransmitData()
 
     int dataTransfered = realStdOutWrite(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, head, lengthToTransfer);
 
-    head += dataTransfered;
-    if (head >= endBuffer)
+    if (dataTransfered > 0)
     {
-        head = buffer;
+        head += dataTransfered;
+        if (head >= endBuffer)
+        {
+            head = buffer;
+        }
     }
 
     return dataTransfered;
