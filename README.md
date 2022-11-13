@@ -1,52 +1,42 @@
-# Hello World Example
+# Printf Task
+Task for handling Printf duties intended for small embedded systems
 
-Starts a FreeRTOS task to print "Hello World".
+## Overview
+PrintfTask is intended for embedded systems, including small micro controller environments running a lightweight RTOS (e.g. FreeRTOS). The PrintfTask offloads the majority of printf duties to a low priority thread that can run in the background. This provides more deterministic behavior when using printf in all other tasks in the system. It also provides for less timing impacts that printf can add to timing critical tasks.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+## Introduction
+Printf is a staple when debugging code and systems of all sizes. Often on small embedded targets, printf is routed to a UART so the user can see various output on a local terminal on their PC, or other device. Not only for debugging, but also used as an output mechanism for users, CLI (command line interface), stats, periodic info, and many other uses.  By moving the timing intensive portions to a separate task, the system can behave more deterministicly, while also providing desired output from the user without the worry of where and when to place printf statements.  It also removes the need for the user to create some custom type of print output mechanism to overcome the possible timing issues.
 
-## How to use example
+## Background
+Nearly every product I've worked on has included some type of printf or output mechanism to a UART. This is not only useful, it's essential in many embedded projects and systems. A significant problem can arise when trying to use printf for info, stats, or debugging of timing critical tasks. Printf routed to a UART can be an expensive time operation. It can also cause different system and software behavior because of the timing impacts. Countless times I've seen a system "work" when the printf statements were included, but not when they were removed... and vice versa. This makes debugging more challenging in such instances. While it can be an indication of a poor design, it's often useful to have a printf ability with minimal disturbance to the system timing.  This solution proposes one such implementation to minimize timing issues for printf
 
-Follow detailed instructions provided specifically for this example. 
+## Features
+- Use normal printf (No need to write a custom printf implementation, or replace all printf statements already being used)
+- Utilizes circular buffer that can be any size desired by the user
+- Dedicated printf task handles output operations (e.g. UART output)
+- Significantly reduces time for printf calls
+- Provides more deterministic behaviour for all printf calls
+- Minimizes timing impacts to timing critical tasks
 
-Select the instructions depending on Espressif chip installed on your development board:
+## Using the Code
+For usage throughout the code, just use printf as you normally would. Once setup and configured, printf can be added anywhere without any special considerations.
 
-- [ESP32 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/index.html)
-- [ESP32-S2 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
+### Setup
+The majority of work is just getting the setup and task correctly configured.  
 
 
-## Example folder contents
+The following sequence diagram shows how this process operates.
+![image](https://user-images.githubusercontent.com/26239627/198851117-43866cd8-f42d-49a7-b140-38054fe01c95.png)
 
-The project **hello_world** contains one source file in C language [hello_world_main.c](main/hello_world_main.c). The file is located in folder [main](main).
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt` files that provide set of directives and instructions describing the project's source files and targets (executable, library, or both). 
 
-Below is short explanation of remaining files in the project folder.
+### Printf Task
 
-```
-├── CMakeLists.txt
-├── example_test.py            Python script used for automated example testing
-├── main
-│   ├── CMakeLists.txt
-│   ├── component.mk           Component make file
-│   └── hello_world_main.c
-├── Makefile                   Makefile used by legacy GNU Make
-└── README.md                  This is the file you are currently reading
-```
 
-For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
+### OS Porting
+The task monitor also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilitized. The main items for porting purposes are message queue operations, task identification operations and watchdog operations.
 
-## Troubleshooting
+The included code provides more thorough examples and details.
 
-* Program upload failure
-
-    * Hardware connection is not correct: run `idf.py -p PORT monitor`, and reboot your board to see if there are any output logs.
-    * The baud rate for downloading is too high: lower your baud rate in the `menuconfig` menu, and try again.
-
-## Technical support and feedback
-
-Please use the following feedback channels:
-
-* For technical queries, go to the [esp32.com](https://esp32.com/) forum
-* For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
-
-We will get back to you as soon as possible.
+## Targets
+This code was developed on an ESP32. However, this can be adapted to use with any target and RTOS.
