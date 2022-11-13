@@ -11,6 +11,8 @@ extern "C" {
 /// @details Retargets the C library printf function to a circular buffer.
 void InitStdOut();
 
+/// @brief get the current high water mark for the buffer
+/// @return most space taken in the printf buffer, since app start, in bytes
 int GetHighWaterMark();
 
 /// @brief Transmit any data available in the buffer

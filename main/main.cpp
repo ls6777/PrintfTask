@@ -90,6 +90,6 @@ void app_main(void)
     xTaskCreate(&StartTask1, "Task1", TASK_1_STACK_SIZE, NULL, TASK_1_PRIORITY, &taskHandle);
 
     // task 2
-    xTaskCreate(&StartTask2, "Task2", TASK_2_STACK_SIZE, NULL, TASK_2_PRIORITY, &taskHandle);
+//    xTaskCreate(&StartTask2, "Task2", TASK_2_STACK_SIZE, NULL, TASK_2_PRIORITY, &taskHandle);
 }
 

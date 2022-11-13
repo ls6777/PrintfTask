@@ -18,7 +18,10 @@ void PrintfTask::Run()
     while (true)
     {
         // Print out any data in the buffer
-        TransmitData();
+        if (TransmitData() < 0)
+        {
+            printf("ERROR printing to output stream!");
+        }
 
         // This can be any value that you want to delay for other lower priority tasks, or sleeping.
         // If this is the lowest priority task, it's possible to remove a delay completely in which
