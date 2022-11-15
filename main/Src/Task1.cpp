@@ -91,9 +91,9 @@ void Task1::HandleProcess()
 
     count++;
 
-    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+//    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
     printf("Task1 stuff: %u\r\n", count);
-    gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+//    gpio_set_level(GPIO_OUTPUT_IO_0, 0);
 
     DELAY_MS(10);
     Process();
