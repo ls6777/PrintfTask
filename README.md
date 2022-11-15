@@ -44,15 +44,64 @@ void app_main(void)
 }
 ```
 
+### OS Porting
+The `PrintfTask` also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations, task identification operations and watchdog operations.
+
+### Target Porting
+This code was developed on an ESP32. However, this can be adapted to use with any target and RTOS. To effectively redirect `printf` to this implementation of `stdout`, we must configure `stdout` as part of the initialization process. For the ESP32, this is done as below, in *PrintfUtils.c*:
+
+```
+// function pointer that's used to flush the buffer when writing out from task
+int (*realStdOutWrite)(struct _reent *, void *, const char *, int);
+
+void InitStdOut()
+{
+    // This will change based on the target being used. This is how to do it
+    // on an ESP32 target
+    realStdOutWrite = _GLOBAL_REENT->_stdout->_write;
+    _GLOBAL_REENT->_stdout->_write = WriteReroute;
+}
+```
+
+The original `_write` function pointer must be saved because that will be used to output the data when the `PrintfTask` runs. How `stdout` works and is assigned will vary by target, so the user will need to research how to do this based on the desired target. For example, on an STM32, using the STM32IDE and compiler, you simply need to override the following functions:
+
+```
+int __io_putchar(int ch);
+int _write(int fd, char *ptr, int len);
+```
+
+## Analysis
+Based on the ESP32 target, we can inspect and do measurements to see the improvements made for this implementation.  Let's start by looking
+at a simple single line example:
+
+```
+void Task1::HandleProcess()
+{
+    static uint32_t count = 0;
+
+    count++;
+
+    gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+    printf("Task1 stuff: %u\r\n", count);
+    gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+
+    DELAY_MS(10);
+    Process();
+}
+```
+
+The above simply writes a single `printf` output statement and delays 10 ms. This is repeated forever.  The GPIO setting allows us to independently measure the results, with and without, the `PrintfTask` and `printf` redirects.
+
+With normal `printf` implementation, we see the following results:
+
+![image](./docs/Task1PrintfTimeNormal.png)
+
+![image](./docs/Task1PrintfTimeNormalMinMaxAvg.png)
 
 The following sequence diagram shows how this process operates.
 ![image](https://user-images.githubusercontent.com/26239627/198851117-43866cd8-f42d-49a7-b140-38054fe01c95.png)
 
-
-### OS Porting
-The task monitor also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations, task identification operations and watchdog operations.
-
+## Conclusions
 The included code provides more thorough examples and details.
 
-## Targets
-This code was developed on an ESP32. However, this can be adapted to use with any target and RTOS.
+
