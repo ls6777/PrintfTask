@@ -6,6 +6,7 @@
 #include "Task1.hpp"
 #include "Task2.hpp"
 #include "Utils.hpp"
+#include "TargetPort.hpp"
 
 #ifdef __cplusplus
 extern "C"
@@ -55,6 +56,9 @@ void StartTask2(void *argument)
     task.Run();
 }
 
+//------------------------------------------------------------------
+// SetupGpio
+//------------------------------------------------------------------
 void SetupGpio()
 {
     //zero-initialize the config structure.
@@ -78,7 +82,7 @@ void SetupGpio()
 //------------------------------------------------------------------
 void app_main(void)
 {
-    TaskHandle_t taskHandle = nullptr;
+    TaskHandle taskHandle = nullptr;
 
     // Setup GPIO
     SetupGpio();

@@ -12,10 +12,11 @@ extern "C" {
 void InitStdOut();
 
 /// @brief get the current high water mark for the buffer
-/// @return most space taken in the printf buffer, since app start, in bytes
+/// @return most space taken in the printf buffer, since application start, in bytes
 int GetHighWaterMark();
 
 /// @brief Transmit any data available in the buffer
+/// @return Amount of data transmitted, in bytes
 int TransmitData();
 
 #ifdef __cplusplus

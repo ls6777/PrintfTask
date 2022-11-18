@@ -12,9 +12,9 @@ static constexpr uint32_t SECS_PER_MIN = 60;
 static constexpr uint32_t MINS_PER_HOUR = 60;
 static constexpr uint32_t HOURS_PER_DAY = 24;
 
-static constexpr uint32_t BYTES_TO_KBYTES = 1024;
-static constexpr uint32_t KBYTES_TO_MBYTES = 1024;
-static constexpr uint32_t BYTES_TO_MBYTES = BYTES_TO_KBYTES * KBYTES_TO_MBYTES;
+static constexpr uint32_t BYTES_PER_KBYTE = 1024;
+static constexpr uint32_t KBYTES_PER_MBYTE = 1024;
+static constexpr uint32_t BYTES_PER_MBYTE = BYTES_PER_KBYTE * KBYTES_PER_MBYTE;
 
 #define GPIO_OUTPUT_IO_0    GPIO_NUM_18
 #define GPIO_OUTPUT_IO_1    GPIO_NUM_19

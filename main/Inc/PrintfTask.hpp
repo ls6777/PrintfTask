@@ -14,7 +14,7 @@ class PrintfTask
         void Initialize();
 
         /// @brief execution of printf task
-        /// @details Main loop that output all data buffered up from printf
+        /// @details Main loop that outputs all data buffered up from printf
         void Run();
 
     private:

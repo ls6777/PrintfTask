@@ -25,18 +25,6 @@ typedef TaskHandle_t TaskHandle;
 typedef QueueHandle_t QHandle;
 typedef BaseType_t StatusType;
 
-/// @brief Get Current Task Handle
-/// @return Handle for currently running task
-TaskHandle GetCurrTaskHandle();
-
-/// @brief Get Task Name
-/// @param taskId - task Id of desired task
-/// @return name for the task
-char* GetTaskName(TaskHandle taskId);
-
-/// @brief Reset the watchdog
-void WatchdogReset();
-
 /// @brief Create the Q
 /// @param QLength - Length of the Q
 /// @param ItemSize - Size of each item in the Q
@@ -55,8 +43,4 @@ StatusType QSend(QHandle qId, void* const buf);
 /// @param timeout - max time to wait for something to get out of the Q
 /// @return PASS if successful, FALSE otherwise
 StatusType QRecv(QHandle qId, void* const buf, uint32_t timeout);
-
-/// @brief Start the watchdog
-void StartWatchdog();
-
 

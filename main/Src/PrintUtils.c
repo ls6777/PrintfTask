@@ -9,7 +9,6 @@ static char* const endBuffer = buffer + MAX_LENGTH;
 static char* tail = buffer;
 static char* head = buffer;
 static int highWaterMark = 0;
-static int count = 0;
 
 // function pointer that's used to flush the buffer when writing out from task
 int (*realStdOutWrite)(struct _reent *, void *, const char *, int);
@@ -50,13 +49,14 @@ void InitStdOut()
 //------------------------------------------------------------------
 int WriteReroute(struct _reent* r, void* fd, const char* data, int len)
 {
-    // check how much space is available, only output up to available space;
+    // check how much space is available, only output up to available space
     int spaceRemaining = (MAX_LENGTH - 1) - CalculateBufferOccupiedSize();
     if (spaceRemaining < len)
     {
         len = spaceRemaining;
     }
 
+    // for loop implementation is simpler, but this memcpy implementation is faster to execute
     if (tail >= head)
     {
         if (tail + len < endBuffer)

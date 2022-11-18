@@ -18,7 +18,7 @@ class Task2
         /// @details Main loop that waits for messages to get posted to the queue and process them
         void Run();
 
-        /// @brief send msg to shutdown this task
+        /// @brief send message to shutdown this task
         void Shutdown();
 
     private:
