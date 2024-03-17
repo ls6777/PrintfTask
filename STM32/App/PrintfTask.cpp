@@ -33,10 +33,10 @@ int PrintfTask::writeReroute(struct _reent *r, void *fd, const char *data, int l
 void PrintfTask::run() {
 	while (true) {
 		int sendDataLength;
-		auto nextDataChunk = mBuffer->pop(1024, sendDataLength);
+		auto nextDataChunk = mBuffer->pop(DATA_CHUNK_SIZE, sendDataLength);
 		int dataTransfered = mPrintFuc(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, nextDataChunk, sendDataLength);
 
 		assert(dataTransfered == sendDataLength);
-		osDelay(100);
+		osDelay(TASK_DELAY_TICKS);
 	}
 }
