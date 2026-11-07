@@ -7,7 +7,7 @@
 #   cmake -S test -B test/build -G Ninja
 #   cmake --build test/build
 #   ctest --test-dir test/build --output-on-failure
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 project(PrintfTaskTests C)
 
 set(CMAKE_C_STANDARD 11)
