@@ -34,10 +34,8 @@ void StartPrintfTask(void *argument)
 
 void app_main(void)
 {
-    TaskHandle_t taskHandle = nullptr;
-
     // Printf task
-    xTaskCreate(&StartPrintfTask, "PrintfTask", PRINTF_TASK_STACK_SIZE, NULL, PRINTF_TASK_PRIORITY, &taskHandle);
+    xTaskCreate(&StartPrintfTask, "PrintfTask", PRINTF_TASK_STACK_SIZE, nullptr, PRINTF_TASK_PRIORITY, nullptr);
 
     // Other initialization
     // ...
@@ -141,7 +139,7 @@ void Task1::HandleProcess()
     count++;
 
     gpio_set_level(GPIO_OUTPUT_IO_0, 1);
-    printf("Task1 stuff: %u\r\n", count);
+    printf("Task1 stuff: %lu\r\n", (unsigned long)count);
     gpio_set_level(GPIO_OUTPUT_IO_0, 0);
 
     DELAY_MS(10);
