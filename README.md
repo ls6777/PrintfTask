@@ -69,7 +69,32 @@ void StdOutPort_Redirect(void);
 int StdOutPort_Write(const char* data, int len);
 ```
 
-For the ESP32 (newlib), the original stdout `_write` function pointer is saved and replaced with one that writes into the buffer. The saved function is then used to output the data when the `PrintfTask` runs:
+For the ESP32, the C library's stdout write function pointer is saved and replaced with one that writes into the buffer. The saved function is then used to output the data when the `PrintfTask` runs. *StdOutPort.c* supports both C libraries available in ESP-IDF, selected by `CONFIG_LIBC`.
+
+Picolibc (the default since ESP-IDF v6.0), where `stdout` is a buffered file that writes through a file descriptor:
+
+```
+static ssize_t WriteReroute(int fd, const void* data, size_t len)
+{
+    return PrintBuffer_Write((const char*)data, (int)len);
+}
+
+void StdOutPort_Redirect(void)
+{
+    struct __file_bufio* const bufio = (struct __file_bufio*)stdout;
+
+    stdOutFd = (int)(intptr_t)bufio->ptr;
+    realStdOutWrite = bufio->write_int;
+    bufio->write_int = WriteReroute;
+}
+
+int StdOutPort_Write(const char* data, int len)
+{
+    return (int)realStdOutWrite(stdOutFd, data, (size_t)len);
+}
+```
+
+Newlib (ESP-IDF v5.x, or `CONFIG_LIBC_NEWLIB`):
 
 ```
 static int WriteReroute(struct _reent* r, void* cookie, const char* data, int len)
@@ -104,10 +129,10 @@ int StdOutPort_Write(const char* data, int len)
 ```
 
 ### Multithreaded Protection
-The ESP32 provides thread protection through layers between the printf call and the stdout redirect natively. Therefore, the code provided doesn't use locks/mutexes for the `WriteReroute` function in *StdOutPort.c*. If the target does **not** support thread protection natively, then a lock or mutex should be used around the call to `PrintBuffer_Write` in the redirected write. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
+On the ESP32, both Picolibc and Newlib lock `stdout` while calling the write function, so writes from multiple tasks are already serialized. Therefore, the code provided doesn't use locks/mutexes for the `WriteReroute` function in *StdOutPort.c*. If the target does **not** support thread protection natively, then a lock or mutex should be used around the call to `PrintBuffer_Write` in the redirected write. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
 
 ## Building
-Build and flash with ESP-IDF (developed with v5.3):
+Build and flash with ESP-IDF v6.1 (v5.x is also supported):
 
 ```
 idf.py build
