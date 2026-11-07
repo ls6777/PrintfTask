@@ -5,7 +5,8 @@
 #include "freertos/queue.h"
 
 #include "esp_log.h"
-#include "esp_task_wdt.h"
+
+#include <cassert>
 
 #define PASS pdPASS
 #define FAIL pdFAIL
@@ -34,13 +35,13 @@ QHandle CreateQ(uint32_t QLength, uint32_t ItemSize);
 /// @brief Put a message in the Q
 /// @param qId - Id of the Q to put the message in
 /// @param buf - pointer to the item to copy into the q
-/// @return PASS if successful, FALSE otherwise
+/// @return PASS if successful, FAIL otherwise
 StatusType QSend(QHandle qId, void* const buf);
 
 /// @brief Get a message out of the Q
-/// @param qId - Id of the Q to put the message in
-/// @param buf - pointer to the item from the q
+/// @param qId - Id of the Q to get the message from
+/// @param buf - pointer to where the item from the q is copied
 /// @param timeout - max time to wait for something to get out of the Q
-/// @return PASS if successful, FALSE otherwise
+/// @return PASS if successful, FAIL otherwise
 StatusType QRecv(QHandle qId, void* const buf, uint32_t timeout);
 

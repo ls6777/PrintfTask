@@ -10,8 +10,6 @@ class Message
         {
             INVALID,        ///< INVALID
             INITIALIZE,     ///< Initialize the task
-            TASK_CHECKIN,   ///< Task Monitor Checkin Message
-            REGISTER,       ///< Register
             PROCESS,        ///< Do some processing
             SHUTDOWN,       ///< shutdown message
             NUM_MSG_IDS

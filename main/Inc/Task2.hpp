@@ -1,6 +1,6 @@
-
 #pragma once
 
+#include "Message.hpp"
 #include "TargetPort.hpp"
 
 /// @brief A sample task doing some printing
@@ -22,6 +22,10 @@ class Task2
         void Shutdown();
 
     private:
+
+        /// @brief Post a message to this task's queue
+        /// @param id - ID of the message to send
+        void SendMessage(Message::MsgId id);
 
         /// @brief Initialize the task
         void HandleInitialize();

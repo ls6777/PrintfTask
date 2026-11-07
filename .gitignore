@@ -1,0 +1,11 @@
+# ESP-IDF build output
+build/
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# Host unit test build output
+test/build/
+
+# Editor / IDE local settings
+.vscode/

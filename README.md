@@ -44,33 +44,88 @@ void app_main(void)
 }
 ```
 
+### Project Layout
+| File | Purpose |
+| --- | --- |
+| *main/Src/PrintBuffer.c* | Target independent circular buffer that holds `printf` output. No OS or C library specifics, so it is unit tested on a PC. |
+| *main/Src/PrintUtils.c* | Target independent `stdout` API used by the `PrintfTask` (`InitStdOut`, `TransmitData`, `GetHighWaterMark`). |
+| *main/Src/StdOutPort.c* | **Target specific.** Redirects `stdout` into the buffer and writes buffered data to the real output device. The only file to change for a new target / C library. |
+| *main/Src/PrintfTask.cpp* | The low priority task that periodically transmits the buffered data. |
+| *main/Src/TargetPort.cpp* | OS abstraction (message queues, delays) for porting to other RTOSes. |
+| *main/Src/Task1.cpp*, *main/Src/Task2.cpp* | Example tasks used for the timing measurements below. |
+| *test/* | Host unit tests. |
+
+The buffer size defaults to 15000 bytes and can be changed by defining `PRINTF_BUFFER_SIZE` at compile time. `GetHighWaterMark()` reports the most of the buffer ever used, which helps choose an appropriate size.
+
 ### OS Porting
 The `PrintfTask` also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations.
 
 ### Target Porting
-This code was developed on an ESP32. However, this can be adapted to use with any target and RTOS. To effectively redirect `printf` to this implementation of `stdout`, we must configure `stdout` as part of the initialization process. For the ESP32, this is done as below, in *PrintfUtils.c*:
+This code was developed on an ESP32. However, it can be adapted to use with any target and RTOS. Everything target specific about `stdout` is in *StdOutPort.c*, which implements the two functions declared in *StdOutPort.h*:
 
 ```
-// function pointer that's used to flush the buffer when writing out from task
-int (*realStdOutWrite)(struct _reent *, void *, const char *, int);
+// Redirect stdout so data written by printf goes into the printf buffer (PrintBuffer_Write)
+void StdOutPort_Redirect(void);
 
-void InitStdOut()
+// Write data to the real stdout device (e.g. UART)
+int StdOutPort_Write(const char* data, int len);
+```
+
+For the ESP32 (newlib), the original stdout `_write` function pointer is saved and replaced with one that writes into the buffer. The saved function is then used to output the data when the `PrintfTask` runs:
+
+```
+static int WriteReroute(struct _reent* r, void* cookie, const char* data, int len)
 {
-    // This will change based on the target being used. This is how to do it on an ESP32 target
+    return PrintBuffer_Write(data, len);
+}
+
+void StdOutPort_Redirect(void)
+{
     realStdOutWrite = _GLOBAL_REENT->_stdout->_write;
     _GLOBAL_REENT->_stdout->_write = WriteReroute;
 }
+
+int StdOutPort_Write(const char* data, int len)
+{
+    return realStdOutWrite(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, data, len);
+}
 ```
 
-The original `_write` function pointer must be saved because that will be used to output the data when the `PrintfTask` runs. How `stdout` works and is assigned will vary by target, so the developer will need to research how to do this based on the desired target. For example, on an STM32, using the STM32IDE and compiler, you simply need to override the following functions:
+How `stdout` works and is assigned will vary by target, so the developer will need to research how to do this based on the desired target. For example, on an STM32, using the STM32IDE and compiler, `StdOutPort_Redirect` can be empty and the C library's `_write` syscall overridden to call `PrintBuffer_Write`, while `StdOutPort_Write` sends the data with the UART driver:
 
 ```
-int __io_putchar(int ch);
-int _write(int fd, char *ptr, int len);
+int _write(int fd, char* ptr, int len)
+{
+    return PrintBuffer_Write(ptr, len);
+}
+
+int StdOutPort_Write(const char* data, int len)
+{
+    return (HAL_UART_Transmit(&huart2, (uint8_t*)data, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
+}
 ```
 
 ### Multithreaded Protection
-The ESP32 provides thread protection through layers between the printf call and the stdout redirect natively. Therefore, the code provided doesn't use locks/mutexs for the `WriteReroute` function in *PrintUtils.c*. If the target does **not** support thread protection natively, then a lock or mutex should be used to wrap the operations in `WriteReroute`. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
+The ESP32 provides thread protection through layers between the printf call and the stdout redirect natively. Therefore, the code provided doesn't use locks/mutexes for the `WriteReroute` function in *StdOutPort.c*. If the target does **not** support thread protection natively, then a lock or mutex should be used around the call to `PrintBuffer_Write` in the redirected write. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
+
+## Building
+Build and flash with ESP-IDF (developed with v5.3):
+
+```
+idf.py build
+idf.py -p <PORT> flash monitor
+```
+
+## Unit Tests
+The target independent code (*PrintBuffer.c* and *PrintUtils.c*, using a fake `StdOutPort`) is tested on a PC using the [Unity](https://github.com/ThrowTheSwitch/Unity) test framework that ships with ESP-IDF. The tests build the buffer with a small size (16 bytes) so wrap-around and full-buffer cases are easy to exercise.
+
+Requirements: a host C compiler (e.g. gcc/MinGW), CMake, Ninja (CMake and Ninja are included with ESP-IDF) and `IDF_PATH` set (or pass `-DUNITY_DIR=<path to Unity src>`).
+
+```
+cmake -S test -B test/build -G Ninja
+cmake --build test/build
+ctest --test-dir test/build --output-on-failure
+```
 
 ## Analysis
 Based on the ESP32 target, we can inspect and do measurements to see the improvements made for this implementation.  
@@ -173,7 +228,7 @@ Task Stats:
 Now we can see a significant improvement using the `PrintfTask` implementation. This is over a 10x improvement and may have a large timing impact for timing critical tasks. The UART buffer can not hold all of the data that the multiple `printf` statements are producing quickly. As such, the `printf` statements for the normal `printf` implementation must wait for the UART to transmit much of the data before allowing the CPU to continue to the next operations. The `PrintfTask` can store all the data in the buffer quickly and then output the data when the `PrintfTask` is allowed to execute.
 
 ## Alternative Implementations
-There are alternative implementations that can accomplish similar results. Each has it's own advantages and disadvantages. I will briefly review a few of these alternatives.
+There are alternative implementations that can accomplish similar results. Each has its own advantages and disadvantages. I will briefly review a few of these alternatives.
 
 ### Overriding `printf`
 Instead of redirecting, overriding `printf` could be another tactic. With a custom `printf`, you could do something like just reroute to a buffer using `vsprintf` and then printing that buffer out later. This is similar to what the code here does, but at a higher level. The problem with this approach is properly overriding `printf`, if even possible, and also remembering to `#include` the correct file for this approach. There's more opportunity for human error and making mistakes.

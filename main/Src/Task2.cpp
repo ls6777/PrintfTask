@@ -1,9 +1,8 @@
-
 #include "Task2.hpp"
-#include "Message.hpp"
 #include "Utils.hpp"
 #include "PrintUtils.h"
-#include "driver/gpio.h"
+
+#include <cstdio>
 
 // buffers for task stats
 static char taskListBuf[500];
@@ -12,12 +11,22 @@ static char taskStatsBuf[500];
 QHandle Task2::msgQHandle;
 
 //------------------------------------------------------------------
+// SendMessage
+//------------------------------------------------------------------
+void Task2::SendMessage(Message::MsgId id)
+{
+    Message msg(id);
+    const StatusType status = QSend(msgQHandle, &msg);
+    ASSERT(PASS == status);
+    (void)status;
+}
+
+//------------------------------------------------------------------
 // Process
 //------------------------------------------------------------------
 void Task2::Process()
 {
-    Message msg(Message::PROCESS);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::PROCESS);
 }
 
 //------------------------------------------------------------------
@@ -25,8 +34,7 @@ void Task2::Process()
 //------------------------------------------------------------------
 void Task2::Shutdown()
 {
-    Message msg(Message::SHUTDOWN);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::SHUTDOWN);
 }
 
 //------------------------------------------------------------------
@@ -35,8 +43,7 @@ void Task2::Shutdown()
 void Task2::Initialize()
 {
     msgQHandle = CreateQ(10, sizeof(Message));
-    Message msg(Message::INITIALIZE);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::INITIALIZE);
 }
 
 //------------------------------------------------------------------

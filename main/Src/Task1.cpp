@@ -1,18 +1,27 @@
-
 #include "Task1.hpp"
-#include "Message.hpp"
 #include "Utils.hpp"
-#include "driver/gpio.h"
+
+#include <cstdio>
 
 QHandle Task1::msgQHandle;
+
+//------------------------------------------------------------------
+// SendMessage
+//------------------------------------------------------------------
+void Task1::SendMessage(Message::MsgId id)
+{
+    Message msg(id);
+    const StatusType status = QSend(msgQHandle, &msg);
+    ASSERT(PASS == status);
+    (void)status;
+}
 
 //------------------------------------------------------------------
 // Process
 //------------------------------------------------------------------
 void Task1::Process()
 {
-    Message msg(Message::PROCESS);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::PROCESS);
 }
 
 //------------------------------------------------------------------
@@ -20,8 +29,7 @@ void Task1::Process()
 //------------------------------------------------------------------
 void Task1::Shutdown()
 {
-    Message msg(Message::SHUTDOWN);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::SHUTDOWN);
 }
 
 //------------------------------------------------------------------
@@ -30,8 +38,7 @@ void Task1::Shutdown()
 void Task1::Initialize()
 {
     msgQHandle = CreateQ(10, sizeof(Message));
-    Message msg(Message::INITIALIZE);
-    ASSERT(PASS == QSend(msgQHandle, &msg));
+    SendMessage(Message::INITIALIZE);
 }
 
 //------------------------------------------------------------------
@@ -92,7 +99,7 @@ void Task1::HandleProcess()
     count++;
 
 //    gpio_set_level(GPIO_OUTPUT_IO_0, 1); // used for debugging or timing
-    printf("Task1 stuff: %u\r\n", count);
+    printf("Task1 stuff: %lu\r\n", (unsigned long)count);
 //    gpio_set_level(GPIO_OUTPUT_IO_0, 0); // used for debugging or timing
 
     DELAY_MS(10);
