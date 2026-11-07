@@ -1,21 +1,27 @@
+/// @file PrintBuffer.c
+/// @brief Circular buffer implementation (see PrintBuffer.h).
+
 #include "PrintBuffer.h"
 
 #include <stddef.h>
 #include <string.h>
 
+/// @brief Size of the buffer as an int, to avoid signed/unsigned mixing in the index math
 #define BUFFER_SIZE ((int)PRINTF_BUFFER_SIZE)
 
-static char buffer[BUFFER_SIZE];
+static char buffer[BUFFER_SIZE];    ///< Storage for buffered printf data
 
-// head: next byte to output (only modified by the consumer, PrintBuffer_Transmit)
-// tail: next free byte to write (only modified by the producer, PrintBuffer_Write)
-static int head = 0;
-static int tail = 0;
-static int highWaterMark = 0;
+static int head = 0;            ///< Index of the next byte to output (only modified by PrintBuffer_Transmit)
+static int tail = 0;            ///< Index of the next free byte to write (only modified by PrintBuffer_Write)
+static int highWaterMark = 0;   ///< Most bytes ever held in the buffer
 
 //------------------------------------------------------------------
 // OccupiedSize
 //------------------------------------------------------------------
+/// @brief Calculate the number of bytes held in the buffer
+/// @param[in] cHead - head index to use
+/// @param[in] cTail - tail index to use
+/// @return bytes in use
 static int OccupiedSize(int cHead, int cTail)
 {
     return (cTail >= cHead) ? (cTail - cHead) : (BUFFER_SIZE - (cHead - cTail));

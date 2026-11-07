@@ -1,3 +1,6 @@
+/// @file main.cpp
+/// @brief Example application: creates the PrintfTask and the example tasks.
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
@@ -12,23 +15,25 @@
 extern "C"
 {
 #endif
-    void app_main(void);
+    void app_main(void); ///< ESP-IDF application entry point (C linkage)
 #ifdef __cplusplus
 }
 #endif
 
-constexpr uint32_t PRINTF_TASK_STACK_SIZE = 2048;
-constexpr UBaseType_t PRINTF_TASK_PRIORITY = 2;
+constexpr uint32_t PRINTF_TASK_STACK_SIZE = 2048;                   ///< PrintfTask stack size, in bytes
+constexpr UBaseType_t PRINTF_TASK_PRIORITY = 2;                     ///< PrintfTask priority (low)
 
-constexpr uint32_t TASK_1_STACK_SIZE = 2048;
-constexpr UBaseType_t TASK_1_PRIORITY = configMAX_PRIORITIES - 1;
+constexpr uint32_t TASK_1_STACK_SIZE = 2048;                        ///< Task1 stack size, in bytes
+constexpr UBaseType_t TASK_1_PRIORITY = configMAX_PRIORITIES - 1;   ///< Task1 priority (highest)
 
-constexpr uint32_t TASK_2_STACK_SIZE = 2048;
-constexpr UBaseType_t TASK_2_PRIORITY = configMAX_PRIORITIES - 2;
+constexpr uint32_t TASK_2_STACK_SIZE = 2048;                        ///< Task2 stack size, in bytes
+constexpr UBaseType_t TASK_2_PRIORITY = configMAX_PRIORITIES - 2;   ///< Task2 priority
 
 //------------------------------------------------------------------
 // StartPrintfTask
 //------------------------------------------------------------------
+/// @brief Entry point for the PrintfTask task. Never returns.
+/// @param[in] argument - task argument (unused)
 void StartPrintfTask(void *argument)
 {
     PrintfTask task;
@@ -39,6 +44,8 @@ void StartPrintfTask(void *argument)
 //------------------------------------------------------------------
 // StartTask1
 //------------------------------------------------------------------
+/// @brief Entry point for the Task1 task. Never returns.
+/// @param[in] argument - task argument (unused)
 void StartTask1(void *argument)
 {
     Task1 task;
@@ -49,6 +56,8 @@ void StartTask1(void *argument)
 //------------------------------------------------------------------
 // StartTask2
 //------------------------------------------------------------------
+/// @brief Entry point for the Task2 task. Never returns.
+/// @param[in] argument - task argument (unused)
 void StartTask2(void *argument)
 {
     Task2 task;
@@ -59,6 +68,7 @@ void StartTask2(void *argument)
 //------------------------------------------------------------------
 // SetupGpio
 //------------------------------------------------------------------
+/// @brief Configure the GPIO outputs used to measure printf timing
 void SetupGpio()
 {
     //zero-initialize the config structure.
@@ -80,6 +90,7 @@ void SetupGpio()
 //------------------------------------------------------------------
 // Main Task
 //------------------------------------------------------------------
+/// @brief Application entry point: sets up the GPIO and creates all tasks
 void app_main(void)
 {
     // Setup GPIO

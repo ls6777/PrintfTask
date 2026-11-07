@@ -1,3 +1,6 @@
+/// @file PrintUtils.c
+/// @brief Target independent stdout API (see PrintUtils.h).
+
 #include "PrintUtils.h"
 #include "PrintBuffer.h"
 #include "StdOutPort.h"

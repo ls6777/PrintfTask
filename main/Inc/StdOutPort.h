@@ -14,6 +14,7 @@ extern "C" {
 /// @details The implementation must:
 ///          - save whatever is needed for StdOutPort_Write to output to the real stdout device
 ///          - route all stdout writes to PrintBuffer_Write (see PrintBuffer.h)
+///
 ///          If the target/C library doesn't serialize stdout access between tasks, the redirected write
 ///          must be protected with a lock/mutex.
 void StdOutPort_Redirect(void);

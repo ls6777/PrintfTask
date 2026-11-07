@@ -1,3 +1,6 @@
+/// @file test_PrintUtils.c
+/// @brief Host unit tests for PrintUtils.c, using a fake StdOutPort.
+
 #include "unity.h"
 #include "PrintUtils.h"
 #include "PrintBuffer.h"

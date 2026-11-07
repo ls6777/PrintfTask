@@ -1,5 +1,10 @@
 #pragma once
 
+/// @file TargetPort.hpp
+/// @brief OS abstraction layer.
+/// @details Wraps the RTOS calls used by the tasks so the code can be ported to a different RTOS by changing
+///          only this file and TargetPort.cpp. This implementation is for FreeRTOS on ESP-IDF.
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -8,40 +13,50 @@
 
 #include <cassert>
 
-#define PASS pdPASS
-#define FAIL pdFAIL
+#define PASS pdPASS     ///< Status returned when an operation succeeds
+#define FAIL pdFAIL     ///< Status returned when an operation fails
 
-#define TRUE pdTRUE
-#define FALSE pdFALSE
+#define TRUE pdTRUE     ///< Boolean true, as used by the OS
+#define FALSE pdFALSE   ///< Boolean false, as used by the OS
 
-#define MAX_DELAY portMAX_DELAY
+#define MAX_DELAY portMAX_DELAY     ///< Wait forever (when used as a timeout)
 
+/// @brief Assert that a condition is true
+/// @note Asserts are intended to stay enabled, even in production builds. They can be disabled through the
+///       project configuration (which defines NDEBUG), so never put required code inside them.
 #define ASSERT(x) assert(x)
+
+/// @brief Log an error message
+/// @param tag - tag identifying the source of the message
+/// @param format - printf style format string, followed by its arguments
 #define LOG_ERROR(tag, format, ...) ESP_LOGE(tag, format, ##__VA_ARGS__)
 
+/// @brief Convert milliseconds to OS ticks
 #define MS_TO_TICKS(x) pdMS_TO_TICKS(x)
+
+/// @brief Block the calling task for a number of OS ticks
 #define DELAY(x) vTaskDelay(x)
 
-typedef TaskHandle_t TaskHandle;
-typedef QueueHandle_t QHandle;
-typedef BaseType_t StatusType;
+typedef TaskHandle_t TaskHandle;    ///< Handle to a task
+typedef QueueHandle_t QHandle;      ///< Handle to a message queue
+typedef BaseType_t StatusType;      ///< Status returned by OS calls (PASS / FAIL)
 
-/// @brief Create the Q
-/// @param QLength - Length of the Q
-/// @param ItemSize - Size of each item in the Q
-/// @return Handle for the Q created
-QHandle CreateQ(uint32_t QLength, uint32_t ItemSize);
+/// @brief Create a message queue
+/// @param[in] qLength - maximum number of items the queue can hold
+/// @param[in] itemSize - size of each item in the queue, in bytes
+/// @return handle for the queue created, or nullptr if it couldn't be created
+QHandle CreateQ(uint32_t qLength, uint32_t itemSize);
 
-/// @brief Put a message in the Q
-/// @param qId - Id of the Q to put the message in
-/// @param buf - pointer to the item to copy into the q
+/// @brief Put a message in a queue
+/// @details Doesn't block. Fails immediately if the queue is full.
+/// @param[in] qId - queue to put the message in
+/// @param[in] buf - pointer to the item to copy into the queue
 /// @return PASS if successful, FAIL otherwise
 StatusType QSend(QHandle qId, void* const buf);
 
-/// @brief Get a message out of the Q
-/// @param qId - Id of the Q to get the message from
-/// @param buf - pointer to where the item from the q is copied
-/// @param timeout - max time to wait for something to get out of the Q
-/// @return PASS if successful, FAIL otherwise
+/// @brief Get a message out of a queue
+/// @param[in] qId - queue to get the message from
+/// @param[out] buf - pointer to where the item from the queue is copied
+/// @param[in] timeout - max time to wait for a message, in OS ticks (see MS_TO_TICKS, MAX_DELAY)
+/// @return PASS if a message was received, FAIL if the timeout expired
 StatusType QRecv(QHandle qId, void* const buf, uint32_t timeout);
-

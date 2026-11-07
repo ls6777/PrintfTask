@@ -1,3 +1,5 @@
+/// @file TargetPort.cpp
+/// @brief OS abstraction layer for FreeRTOS (see TargetPort.hpp).
 
 #include "TargetPort.hpp"
 

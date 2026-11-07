@@ -1,12 +1,14 @@
+/// @file Task2.cpp
+/// @brief Example Task2 implementation (see Task2.hpp).
+
 #include "Task2.hpp"
 #include "Utils.hpp"
 #include "PrintUtils.h"
 
 #include <cstdio>
 
-// buffers for task stats
-static char taskListBuf[500];
-static char taskStatsBuf[500];
+static char taskListBuf[500];   ///< Output of vTaskList()
+static char taskStatsBuf[500];  ///< Output of vTaskGetRunTimeStats()
 
 QHandle Task2::msgQHandle;
 
@@ -51,7 +53,7 @@ void Task2::Initialize()
 //------------------------------------------------------------------
 void Task2::Run()
 {
-    constexpr uint32_t MSG_Q_TIMEOUT = 5000; // ms
+    constexpr uint32_t MSG_Q_TIMEOUT = 5000; // ms to wait for a message before printing the stats
     StatusType status = FALSE;
     Message msg;
 

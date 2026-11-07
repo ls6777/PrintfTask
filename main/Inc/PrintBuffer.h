@@ -6,34 +6,39 @@
 /// @details The buffer is a single producer / single consumer queue. The producer is whatever is writing
 ///          to stdout (printf) and the consumer is the PrintfTask. No OS or C library specifics are used
 ///          here so the logic can be unit tested on a host machine.
+///
+/// @note Only one context may call PrintBuffer_Write at a time (stdout writes must be serialized, see
+///       StdOutPort.h), and only one context may call PrintBuffer_Transmit at a time (the PrintfTask).
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/// @brief Total size of the circular buffer in bytes.
+/// @brief Total size of the circular buffer, in bytes. Define at compile time to override the default.
 /// @note One byte is always kept free to distinguish a full buffer from an empty one, so the usable
 ///       capacity is PRINTF_BUFFER_SIZE - 1.
 #ifndef PRINTF_BUFFER_SIZE
 #define PRINTF_BUFFER_SIZE 15000
 #endif
 
-/// @brief Function used to output data from the buffer (e.g. the original stdout write function)
+/// @brief Function used to output data from the buffer (e.g. StdOutPort_Write)
 /// @param[in] data - data to be output
 /// @param[in] len - length of data to output, in bytes (always > 0)
 /// @return number of bytes actually output, or a negative value on error
 typedef int (*PrintBufferOutputFn)(const char* data, int len);
 
 /// @brief Copy data into the buffer
-/// @details If there isn't enough space for all of the data, only what fits is copied.
+/// @details If there isn't enough space for all of the data, only what fits is copied and the rest is
+///          dropped.
 /// @param[in] data - data to be written
 /// @param[in] len - length of data to be written, in bytes
-/// @return number of bytes copied into the buffer
+/// @return number of bytes copied into the buffer (0 if data is NULL or len <= 0)
 int PrintBuffer_Write(const char* data, int len);
 
 /// @brief Output all data currently in the buffer
 /// @details Output may take two calls to the output function when the data wraps around the end of the
-///          buffer. Stops early if the output function outputs less than requested.
+///          buffer. Stops early if the output function outputs less than requested. Data that isn't
+///          output stays in the buffer for the next call.
 /// @param[in] output - function used to output the data
 /// @return number of bytes output, or the negative error value returned by the output function
 int PrintBuffer_Transmit(PrintBufferOutputFn output);
@@ -48,6 +53,7 @@ int PrintBuffer_GetOccupiedSize(void);
 int PrintBuffer_GetHighWaterMark(void);
 
 /// @brief Discard all buffered data and clear the high water mark
+/// @note Not thread safe. Intended for unit tests, or before stdout is redirected.
 void PrintBuffer_Reset(void);
 
 #ifdef __cplusplus

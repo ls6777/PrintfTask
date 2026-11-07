@@ -1,3 +1,6 @@
+/// @file test_PrintBuffer.c
+/// @brief Host unit tests for PrintBuffer.c.
+
 #include "unity.h"
 #include "PrintBuffer.h"
 

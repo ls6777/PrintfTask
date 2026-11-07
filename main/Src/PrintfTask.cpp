@@ -1,3 +1,6 @@
+/// @file PrintfTask.cpp
+/// @brief Printf task implementation (see PrintfTask.hpp).
+
 #include "PrintfTask.hpp"
 #include "Utils.hpp"
 #include "PrintUtils.h"

@@ -1,41 +1,45 @@
 #pragma once
 
+/// @file Task1.hpp
+/// @brief Example task that prints a single line periodically.
+
 #include "Message.hpp"
 #include "TargetPort.hpp"
 
-/// @brief A sample task doing some printing
+/// @brief Example task that prints a counter every 10 ms
+/// @details Used to measure the time taken by a single, short printf call.
 class Task1
 {
     public:
 
-        /// @brief Post initialize message to this task
+        /// @brief Create this task's message queue and post the initialize message to it
+        /// @note Must be called before Run().
         void Initialize();
 
-        /// @brief Send message for task to do processing
+        /// @brief Post a message for this task to do processing
         void Process();
 
-        /// @brief task1 execution
-        /// @details Main loop that waits for messages to get posted to the queue and process them
+        /// @brief Execution of Task1
+        /// @details Main loop that waits for messages posted to the queue and processes them. Never returns.
         void Run();
 
-        /// @brief send msg to shutdown this task
+        /// @brief Post a message to shut down this task
         void Shutdown();
 
     private:
 
         /// @brief Post a message to this task's queue
-        /// @param id - ID of the message to send
+        /// @param[in] id - ID of the message to send
         void SendMessage(Message::MsgId id);
 
-        /// @brief Initialize the task
+        /// @brief Handle the initialize message: print a message and start processing
         void HandleInitialize();
 
-        /// @brief Do some processing on this task
+        /// @brief Handle the process message: print the counter, delay, then post the next process message
         void HandleProcess();
 
-        /// @brief Shutdown this task
+        /// @brief Handle the shutdown message: print a message and stop processing
         void HandleShutdown();
 
-        static QHandle msgQHandle;
+        static QHandle msgQHandle;  ///< This task's message queue
 };
-
