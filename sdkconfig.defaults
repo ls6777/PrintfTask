@@ -1,0 +1,11 @@
+# Settings this project relies on. ESP-IDF applies these whenever sdkconfig is (re)generated,
+# e.g. after "idf.py set-target" or deleting sdkconfig.
+
+# 1 ms tick so DELAY_MS(10) etc. are accurate
+CONFIG_FREERTOS_HZ=1000
+
+# Needed by Task2 for vTaskList() and vTaskGetRunTimeStats()
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS=y
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
+CONFIG_FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER=y
