@@ -7,5 +7,7 @@ dependencies.lock
 # Host unit test build output
 test/build/
 
-# Editor / IDE local settings
-.vscode/
+# VS Code: share only the project-wide files. settings.json holds personal values (ESP-IDF install, serial port)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/c_cpp_properties.json

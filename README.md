@@ -139,6 +139,13 @@ idf.py build
 idf.py -p <PORT> flash monitor
 ```
 
+### VS Code
+The project is set up for VS Code. When you open the folder, VS Code offers to install the recommended extensions: [ESP-IDF](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension) and [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools).
+
+1. In the ESP-IDF extension, select your ESP-IDF install, the target (`esp32`) and the serial port. These are personal settings, so they're saved to *.vscode/settings.json*, which isn't committed.
+2. Use **Build**, **Flash** and **Monitor** (or **Build, Flash and Monitor**) from the ESP-IDF status bar.
+3. The C/C++ extension reads *build/compile_commands.json* (and *test/build/compile_commands.json* for the unit tests), so IntelliSense, the outline and go to definition work after the first build.
+
 ## Unit Tests
 The target independent code (*PrintBuffer.c* and *PrintUtils.c*, using a fake `StdOutPort`) is tested on a PC using the [Unity](https://github.com/ThrowTheSwitch/Unity) test framework that ships with ESP-IDF. The tests build the buffer with a small size (16 bytes) so wrap-around and full-buffer cases are easy to exercise.
 

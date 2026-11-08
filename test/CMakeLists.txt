@@ -12,6 +12,8 @@ project(PrintfTaskTests C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+# Lets VS Code (C/C++ extension) resolve includes in the test files
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(UNITY_DIR "$ENV{IDF_PATH}/components/unity/unity/src" CACHE PATH "Path to the Unity test framework src directory")
 if(NOT EXISTS "${UNITY_DIR}/unity.c")
