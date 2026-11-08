@@ -168,7 +168,9 @@ ctest --test-dir test/build --output-on-failure
 ```
 
 ## Analysis
-Based on the ESP32 target, we can inspect and do measurements to see the improvements made for this implementation.  
+Based on the ESP32 target, we can inspect and do measurements to see the improvements made for this implementation.
+
+The measurements were made on an ESP-WROVER-KIT (ESP32-D0WDQ6) running ESP-IDF v6.1, with `stdout` on the UART at 115200 baud. A Saleae Logic Pro 8 sampling at 100 MS/s recorded GPIO18 and GPIO19, which are set high while the measured `printf` statements run. Each "normal `printf`" build is the same firmware with the `PrintUtils::InitStdOut()` call removed, so `printf` writes straight to the UART. The statistics cover every pulse in a 10 second (Example 1) or 14 second (Example 2) capture.
 
 ### Example 1
 Let's start by looking at a simple single line example:
@@ -203,8 +205,9 @@ And with `PrintfTask` implementation:
 
 ![image](./docs/Task1PrintfTimeBufferMinMaxAvg.png)
 
-The above shows ~44% improvement, but going from 52 microseconds to 32 microseconds may not have a significant timing impact on your system. This result is because the UART buffer is larger than the data we are trying to write in this single statement. Therefore, the UART is able to hold all the data while it pushed it out the communication bus, while
-letting the CPU continue on to further operations.
+A typical `printf` drops from 65 microseconds to 32 microseconds, about a 2x improvement. On its own that may not have a significant timing impact on your system. The single statement is small enough to fit in the UART's buffer, so the UART holds the data while it's sent out on the bus and the CPU continues on to further operations.
+
+The bigger difference is the worst case. With the normal `printf`, a few calls took up to 19.3 milliseconds. These happen every 5 seconds, when Task2 prints its task statistics: Task2's output fills the UART, so Task1's `printf` has to wait for the UART to drain, even though Task1 has the higher priority. With the `PrintfTask`, the slowest of the 1001 calls took 33.3 microseconds, because writing to the buffer never waits for the UART.
 
 ### Example 2
 Let's look at a more complex example with multiple `printf` statements:
@@ -235,7 +238,7 @@ void Task2::HandleProcess()
 }
 ```
 
-The above writes multiple `printf` output statements and delays 100 ms. This is repeated forever. There are two separate sections based on getting task list and task stats. The GPIO setting allows us to independently measure the results, with and without, the `PrintfTask` and `printf` redirects.
+The above writes multiple `printf` output statements. For these measurements Task2 ran every 200 ms (the example code runs it every 5 seconds). This is repeated forever. There are two separate sections based on getting task list and task stats. The GPIO setting allows us to independently measure the results, with and without, the `PrintfTask` and `printf` redirects.
 
 With normal `printf` implementation, we see the following results:
 
@@ -265,7 +268,7 @@ Task Stats:
 
 ![image](./docs/Task2TaskStatsPrintfTimeBufferMinMaxAvg.png)
 
-Now we can see a significant improvement using the `PrintfTask` implementation. This is over a 10x improvement and may have a large timing impact for timing critical tasks. The UART buffer can not hold all of the data that the multiple `printf` statements are producing quickly. As such, the `printf` statements for the normal `printf` implementation must wait for the UART to transmit much of the data before allowing the CPU to continue to the next operations. The `PrintfTask` can store all the data in the buffer quickly and then output the data when the `PrintfTask` is allowed to execute.
+Now we can see a significant improvement using the `PrintfTask` implementation. The task list section drops from 26.3 milliseconds to 271 microseconds, and the task stats section from 36.0 milliseconds to 290 microseconds. This is roughly a 100x improvement and may have a large timing impact for timing critical tasks. The UART buffer can not hold all of the data that the multiple `printf` statements are producing quickly. As such, the `printf` statements for the normal `printf` implementation must wait for the UART to transmit much of the data before allowing the CPU to continue to the next operations. The `PrintfTask` can store all the data in the buffer quickly and then output the data when the `PrintfTask` is allowed to execute.
 
 ## Alternative Implementations
 There are alternative implementations that can accomplish similar results. Each has its own advantages and disadvantages. I will briefly review a few of these alternatives.
