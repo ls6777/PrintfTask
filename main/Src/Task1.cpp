@@ -14,7 +14,7 @@ QHandle Task1::msgQHandle;
 void Task1::SendMessage(Message::MsgId id)
 {
     Message msg(id);
-    const StatusType status = QSend(msgQHandle, &msg);
+    const StatusType status = TargetPort::QSend(msgQHandle, &msg);
     ASSERT(PASS == status);
     (void)status;
 }
@@ -40,7 +40,7 @@ void Task1::Shutdown()
 //------------------------------------------------------------------
 void Task1::Initialize()
 {
-    msgQHandle = CreateQ(10, sizeof(Message));
+    msgQHandle = TargetPort::CreateQ(10, sizeof(Message));
     SendMessage(Message::INITIALIZE);
 }
 
@@ -55,7 +55,7 @@ void Task1::Run()
     while (true)
     {
         // Wait for new message to process indefinitely
-        status = QRecv(msgQHandle, &msg, MAX_DELAY);
+        status = TargetPort::QRecv(msgQHandle, &msg, MAX_DELAY);
 
         // Check status of message Q result
         if (TRUE == status)

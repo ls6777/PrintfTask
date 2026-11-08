@@ -56,7 +56,7 @@ void app_main(void)
 The buffer size defaults to 15000 bytes and can be changed with `PrintUtils::BUFFER_SIZE` in *PrintUtils.hpp*. `PrintUtils::GetHighWaterMark()` reports the most of the buffer ever used, which helps choose an appropriate size.
 
 ### OS Porting
-The `PrintfTask` also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations.
+The `PrintfTask` also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations. The functions are static members of the `TargetPort` class (e.g. `TargetPort::QSend()`), and the types, constants and macros are global.
 
 ### Target Porting
 This code was developed on an ESP32. However, it can be adapted to use with any target and RTOS. Everything target specific about `stdout` is in *StdOutPort.cpp*, which implements the two functions declared in the static class in *StdOutPort.hpp*:

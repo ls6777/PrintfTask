@@ -6,7 +6,7 @@
 //------------------------------------------------------------------
 // CreateQ
 //------------------------------------------------------------------
-QHandle CreateQ(uint32_t qLength, uint32_t itemSize)
+QHandle TargetPort::CreateQ(uint32_t qLength, uint32_t itemSize)
 {
     return xQueueCreate(qLength, itemSize);
 }
@@ -14,7 +14,7 @@ QHandle CreateQ(uint32_t qLength, uint32_t itemSize)
 //------------------------------------------------------------------
 // QSend
 //------------------------------------------------------------------
-StatusType QSend(QHandle qId, void* const buf)
+StatusType TargetPort::QSend(QHandle qId, const void* buf)
 {
     return xQueueSend(qId, buf, 0);
 }
@@ -22,7 +22,7 @@ StatusType QSend(QHandle qId, void* const buf)
 //------------------------------------------------------------------
 // QRecv
 //------------------------------------------------------------------
-StatusType QRecv(QHandle qId, void* const buf, uint32_t timeout)
+StatusType TargetPort::QRecv(QHandle qId, void* buf, uint32_t timeout)
 {
     return xQueueReceive(qId, buf, timeout);
 }
