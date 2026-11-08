@@ -3,14 +3,14 @@
 
 #include "PrintfTask.hpp"
 #include "Utils.hpp"
-#include "PrintUtils.h"
+#include "PrintUtils.hpp"
 
 //------------------------------------------------------------------
 // Initialize
 //------------------------------------------------------------------
 void PrintfTask::Initialize()
 {
-    InitStdOut();
+    PrintUtils::InitStdOut();
 }
 
 //------------------------------------------------------------------
@@ -21,7 +21,7 @@ void PrintfTask::Run()
     while (true)
     {
         // Print out any data in the buffer
-        if (TransmitData() < 0)
+        if (PrintUtils::TransmitData() < 0)
         {
             printf("ERROR printing to output stream!");
         }

@@ -3,7 +3,7 @@
 
 #include "Task2.hpp"
 #include "Utils.hpp"
-#include "PrintUtils.h"
+#include "PrintUtils.hpp"
 
 #include <cstdio>
 
@@ -122,7 +122,7 @@ void Task2::HandleProcess()
     printf("%s\r\n", taskStatsBuf);
     printf("\r\n");
 
-    printf("High Water Mark: %d\r\n", GetHighWaterMark());
+    printf("High Water Mark: %d\r\n", PrintUtils::GetHighWaterMark());
     printf("\r\n");
 //    gpio_set_level(GPIO_OUTPUT_IO_1, 0); // used for debugging or timing
 }

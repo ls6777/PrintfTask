@@ -45,91 +45,101 @@ void app_main(void)
 ### Project Layout
 | File | Purpose |
 | --- | --- |
-| *main/Src/PrintBuffer.c* | Target independent circular buffer that holds `printf` output. No OS or C library specifics, so it is unit tested on a PC. |
-| *main/Src/PrintUtils.c* | Target independent `stdout` API used by the `PrintfTask` (`InitStdOut`, `TransmitData`, `GetHighWaterMark`). |
-| *main/Src/StdOutPort.c* | **Target specific.** Redirects `stdout` into the buffer and writes buffered data to the real output device. The only file to change for a new target / C library. |
+| *main/Inc/PrintBuffer.hpp* | Target independent circular buffer class template (`PrintBuffer<Size>`) that holds `printf` output. No OS or C library specifics, so it is unit tested on a PC. |
+| *main/Src/PrintUtils.cpp* | Target independent `stdout` API. Owns the single printf buffer and connects it to `stdout` (`PrintUtils::InitStdOut`, `Write`, `TransmitData`, `GetHighWaterMark`). |
+| *main/Src/StdOutPort.cpp* | **Target specific.** Redirects `stdout` into the buffer and writes buffered data to the real output device. The only file to change for a new target / C library. |
 | *main/Src/PrintfTask.cpp* | The low priority task that periodically transmits the buffered data. |
 | *main/Src/TargetPort.cpp* | OS abstraction (message queues, delays) for porting to other RTOSes. |
 | *main/Src/Task1.cpp*, *main/Src/Task2.cpp* | Example tasks used for the timing measurements below. |
 | *test/* | Host unit tests. |
 
-The buffer size defaults to 15000 bytes and can be changed by defining `PRINTF_BUFFER_SIZE` at compile time. `GetHighWaterMark()` reports the most of the buffer ever used, which helps choose an appropriate size.
+The buffer size defaults to 15000 bytes and can be changed with `PrintUtils::BUFFER_SIZE` in *PrintUtils.hpp*. `PrintUtils::GetHighWaterMark()` reports the most of the buffer ever used, which helps choose an appropriate size.
 
 ### OS Porting
 The `PrintfTask` also uses some of the operating system calls to operate. Therefore, *TargetPort.hpp* and *TargetPort.cpp* were created to easily port for different operating systems being utilized. The main items for porting purposes are message queue operations.
 
 ### Target Porting
-This code was developed on an ESP32. However, it can be adapted to use with any target and RTOS. Everything target specific about `stdout` is in *StdOutPort.c*, which implements the two functions declared in *StdOutPort.h*:
+This code was developed on an ESP32. However, it can be adapted to use with any target and RTOS. Everything target specific about `stdout` is in *StdOutPort.cpp*, which implements the two functions declared in the static class in *StdOutPort.hpp*:
 
+```cpp
+class StdOutPort
+{
+    public:
+        // Redirect stdout so data written by printf goes into the printf buffer (PrintUtils::Write)
+        static void Redirect();
+
+        // Write data to the real stdout device (e.g. UART)
+        static int Write(const char* data, int len);
+};
 ```
-// Redirect stdout so data written by printf goes into the printf buffer (PrintBuffer_Write)
-void StdOutPort_Redirect(void);
 
-// Write data to the real stdout device (e.g. UART)
-int StdOutPort_Write(const char* data, int len);
-```
-
-For the ESP32, the C library's stdout write function pointer is saved and replaced with one that writes into the buffer. The saved function is then used to output the data when the `PrintfTask` runs. *StdOutPort.c* supports both C libraries available in ESP-IDF, selected by `CONFIG_LIBC`.
+For the ESP32, the C library's stdout write function pointer is saved and replaced with one that writes into the buffer. The saved function is then used to output the data when the `PrintfTask` runs. *StdOutPort.cpp* supports both C libraries available in ESP-IDF, selected by `CONFIG_LIBC`.
 
 Picolibc (the default since ESP-IDF v6.0), where `stdout` is a buffered file that writes through a file descriptor:
 
-```
-static ssize_t WriteReroute(int fd, const void* data, size_t len)
+```cpp
+ssize_t WriteReroute(int fd, const void* data, size_t len)
 {
-    return PrintBuffer_Write((const char*)data, (int)len);
+    return PrintUtils::Write(static_cast<const char*>(data), static_cast<int>(len));
 }
 
-void StdOutPort_Redirect(void)
+void StdOutPort::Redirect()
 {
-    struct __file_bufio* const bufio = (struct __file_bufio*)stdout;
+    auto* const bufio = reinterpret_cast<__file_bufio*>(stdout);
 
-    stdOutFd = (int)(intptr_t)bufio->ptr;
+    stdOutFd = static_cast<int>(reinterpret_cast<intptr_t>(bufio->ptr));
     realStdOutWrite = bufio->write_int;
     bufio->write_int = WriteReroute;
 }
 
-int StdOutPort_Write(const char* data, int len)
+int StdOutPort::Write(const char* data, int len)
 {
-    return (int)realStdOutWrite(stdOutFd, data, (size_t)len);
+    return static_cast<int>(realStdOutWrite(stdOutFd, data, static_cast<size_t>(len)));
 }
 ```
 
 Newlib (ESP-IDF v5.x, or `CONFIG_LIBC_NEWLIB`):
 
-```
-static int WriteReroute(struct _reent* r, void* cookie, const char* data, int len)
+```cpp
+int WriteReroute(_reent* r, void* cookie, const char* data, int len)
 {
-    return PrintBuffer_Write(data, len);
+    return PrintUtils::Write(data, len);
 }
 
-void StdOutPort_Redirect(void)
+void StdOutPort::Redirect()
 {
     realStdOutWrite = _GLOBAL_REENT->_stdout->_write;
     _GLOBAL_REENT->_stdout->_write = WriteReroute;
 }
 
-int StdOutPort_Write(const char* data, int len)
+int StdOutPort::Write(const char* data, int len)
 {
     return realStdOutWrite(_GLOBAL_REENT, _GLOBAL_REENT->_stdout, data, len);
 }
 ```
 
-How `stdout` works and is assigned will vary by target, so the developer will need to research how to do this based on the desired target. For example, on an STM32, using the STM32IDE and compiler, `StdOutPort_Redirect` can be empty and the C library's `_write` syscall overridden to call `PrintBuffer_Write`, while `StdOutPort_Write` sends the data with the UART driver:
+How `stdout` works and is assigned will vary by target, so the developer will need to research how to do this based on the desired target. For example, on an STM32, using the STM32IDE and compiler, `StdOutPort::Redirect` can be empty and the C library's `_write` syscall overridden to call `PrintUtils::Write`, while `StdOutPort::Write` sends the data with the UART driver. `_write` is called by the C library, so it must be declared `extern "C"`:
 
-```
-int _write(int fd, char* ptr, int len)
+```cpp
+extern "C" int _write(int fd, char* ptr, int len)
 {
-    return PrintBuffer_Write(ptr, len);
+    (void)fd;
+    return PrintUtils::Write(ptr, len);
 }
 
-int StdOutPort_Write(const char* data, int len)
+void StdOutPort::Redirect()
 {
-    return (HAL_UART_Transmit(&huart2, (uint8_t*)data, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
+}
+
+int StdOutPort::Write(const char* data, int len)
+{
+    const auto bytes = reinterpret_cast<const uint8_t*>(data);
+    return (HAL_UART_Transmit(&huart2, bytes, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
 }
 ```
 
 ### Multithreaded Protection
-On the ESP32, both Picolibc and Newlib lock `stdout` while calling the write function, so writes from multiple tasks are already serialized. Therefore, the code provided doesn't use locks/mutexes for the `WriteReroute` function in *StdOutPort.c*. If the target does **not** support thread protection natively, then a lock or mutex should be used around the call to `PrintBuffer_Write` in the redirected write. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
+On the ESP32, both Picolibc and Newlib lock `stdout` while calling the write function, so writes from multiple tasks are already serialized. Therefore, the code provided doesn't use locks/mutexes for the `WriteReroute` function in *StdOutPort.cpp*. If the target does **not** support thread protection natively, then a lock or mutex should be used around the call to `PrintUtils::Write` in the redirected write. This will keep the `printf` statements, from multiple tasks, from interspersing or corrupting the stdout buffer.
 
 ## Building
 Build and flash with ESP-IDF v6.1 (v5.x is also supported):
@@ -147,9 +157,9 @@ The project is set up for VS Code. When you open the folder, VS Code offers to i
 3. The C/C++ extension reads *build/compile_commands.json* (and *test/build/compile_commands.json* for the unit tests), so IntelliSense, the outline and go to definition work after the first build.
 
 ## Unit Tests
-The target independent code (*PrintBuffer.c* and *PrintUtils.c*, using a fake `StdOutPort`) is tested on a PC using the [Unity](https://github.com/ThrowTheSwitch/Unity) test framework that ships with ESP-IDF. The tests build the buffer with a small size (16 bytes) so wrap-around and full-buffer cases are easy to exercise.
+The target independent code (*PrintBuffer.hpp* and *PrintUtils.cpp*, using a fake `StdOutPort`) is tested on a PC using the [Unity](https://github.com/ThrowTheSwitch/Unity) test framework that ships with ESP-IDF. The buffer tests use a small `PrintBuffer<16>`, recreated for each test, so wrap-around and full-buffer cases are easy to exercise.
 
-Requirements: a host C compiler (e.g. gcc/MinGW), CMake, Ninja (CMake and Ninja are included with ESP-IDF) and `IDF_PATH` set (or pass `-DUNITY_DIR=<path to Unity src>`).
+Requirements: a host C and C++ compiler (e.g. gcc/g++ from MinGW), CMake, Ninja (CMake and Ninja are included with ESP-IDF) and `IDF_PATH` set (or pass `-DUNITY_DIR=<path to Unity src>`).
 
 ```
 cmake -S test -B test/build -G Ninja
@@ -219,7 +229,7 @@ void Task2::HandleProcess()
     printf("%s\r\n", taskStatsBuf);
     printf("\r\n");
 
-    printf("High Water Mark: %d\r\n", GetHighWaterMark());
+    printf("High Water Mark: %d\r\n", PrintUtils::GetHighWaterMark());
     printf("\r\n");
     gpio_set_level(GPIO_OUTPUT_IO_1, 0);
 }
