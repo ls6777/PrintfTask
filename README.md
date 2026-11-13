@@ -1,4 +1,7 @@
 # Printf Task
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/ls6777)
+
 Task for handling `printf` duties intended for small embedded systems
 
 ## Overview
